@@ -350,7 +350,7 @@
 
 
     /* PIN 모달 */
-    .pin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center}
+    .pin-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
     .pin-modal.open{display:flex}
     .pin-sheet{
       background:var(--s);border-radius:20px;
@@ -799,7 +799,9 @@
 </div>
 
 
-<!-- PIN 모달 (Confirm 비밀번호) -->
+</div><!-- /app -->
+
+<!-- PIN 모달 — .app 바깥에 위치해야 overflow:hidden 영향 안 받음 -->
 <div class="pin-modal" id="pin-modal">
   <div class="pin-sheet">
     <div class="pin-title">확인 비밀번호 입력</div>
@@ -829,8 +831,6 @@
     <button class="pin-cancel" onclick="closePinModal()">취소</button>
   </div>
 </div>
-
-</div><!-- /app -->
 
 <script>
 // ─── DB 미션 ───
