@@ -1341,10 +1341,13 @@ function pinInput(digit){
 
   if(_pinInput.length === PIN_CODE.length){
     if(_pinInput === PIN_CODE){
-      // 성공
+      // 성공: 콜백을 먼저 저장한 뒤 모달 닫기
+      const cb = _pinCb;
       setTimeout(() => {
-        closePinModal();
-        if(_pinCb) _pinCb();
+        _pinCb = null;
+        _pinInput = '';
+        document.getElementById('pin-modal').classList.remove('open');
+        if(cb) cb();
       }, 180);
     } else {
       // 실패 — shake + 초기화
