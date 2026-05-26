@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bingo-trip-v2';
+const CACHE_NAME = 'bingo-trip-v1779773065';
 const STATIC_ASSETS = [
   './',
   './index.html',

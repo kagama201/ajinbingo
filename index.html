@@ -1180,10 +1180,12 @@ function calcCoupon(checked){
 
 // Bingo Daily: 현재 Day confirm
 function confirmDay(){
+  console.log('[confirmDay] PIN 모달 열기');
   openPinModal('confirmDay');
 }
 
 function executeConfirmDay(){
+  console.log('[executeConfirmDay] dayIdx:', dayIdx, 'dailyPages:', dailyPages.length);
   const page = dailyPages[dayIdx];
   if(!page || page.confirmed) return;
   page.confirmed = true;
@@ -1227,10 +1229,12 @@ function cancelDay(){
 
 // Whole List confirm
 function confirmList(){
+  console.log('[confirmList] PIN 모달 열기');
   openPinModal('confirmList');
 }
 
 function executeConfirmList(){
+  console.log('[executeConfirmList] history:', history.length);
   const activeEntry = history.find(h=>h.active);
   if(!activeEntry || activeEntry.confirmed) return;
   activeEntry.confirmed = true;
@@ -1345,16 +1349,22 @@ function pinInput(digit){
 
   if(_pinInput.length === PIN_CODE.length){
     if(_pinInput === PIN_CODE){
-      // 성공 — 모달 닫고 pending action 실행
+      console.log('[PIN] success, action:', _pendingAction);
       const action = _pendingAction;
       _pinInput = '';
       _pendingAction = null;
       document.getElementById('pin-modal').classList.remove('open');
-      // 다음 프레임에서 실행 (모달 닫힘 보장)
-      requestAnimationFrame(()=>{
-        if(action === 'confirmDay')  executeConfirmDay();
-        if(action === 'confirmList') executeConfirmList();
-      });
+      setTimeout(()=>{
+        try {
+          console.log('[PIN] executing:', action);
+          if(action === 'confirmDay')  executeConfirmDay();
+          if(action === 'confirmList') executeConfirmList();
+          console.log('[PIN] execution done');
+        } catch(err){
+          console.error('[PIN] execution error:', err);
+          alert('Confirm 처리 중 오류: ' + err.message);
+        }
+      }, 200);
     } else {
       // 실패 — shake
       renderPinDots(true);
