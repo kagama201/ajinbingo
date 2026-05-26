@@ -1185,22 +1185,22 @@ function confirmDay(){
     if(!page || page.confirmed) return;
     page.confirmed = true;
 
-  const activeEntry = history.find(h=>h.active);
-  if(activeEntry){
-    // 현재 Day 체크 기준 쿠폰 계산
-    const dayCoupon = page.checked.filter(Boolean).length === 9 ? 2 : page.checked.filter(Boolean).length > 0 ? 1 : 0;
-    activeEntry.coupons = (activeEntry.coupons||0) + dayCoupon;
-    activeEntry.dayCoupons = activeEntry.dayCoupons || {};
-    activeEntry.dayCoupons[dayIdx] = dayCoupon;
-    syncChecks(activeEntry);
-  }
+    const activeEntry = history.find(h=>h.active);
+    if(activeEntry){
+      const done = page.checked.filter(Boolean).length;
+      const dayCoupon = done === 9 ? 2 : done > 0 ? 1 : 0;
+      activeEntry.coupons = (activeEntry.coupons||0) + dayCoupon;
+      activeEntry.dayCoupons = activeEntry.dayCoupons || {};
+      activeEntry.dayCoupons[dayIdx] = dayCoupon;
+      syncChecks(activeEntry);
+      toast(`Day ${dayIdx+1} 확정! 쿠폰 +${dayCoupon} 🎫`);
+    }
     renderBingoDay();
-    ['main','bingo','list'].forEach(sc => {
-      const dh = document.getElementById('dh-'+sc);
-      if(dh && dh.innerHTML) renderHistory(sc);
+    ['main','bingo','list'].forEach(sc=>{
+      const dh=document.getElementById('dh-'+sc);
+      if(dh&&dh.innerHTML) renderHistory(sc);
     });
-    toast(`Day ${dayIdx+1} 확정! 쿠폰 +${activeEntry?.dayCoupons?.[dayIdx]||0} 🎫`);
-  }); // openPinModal 콜백 끝
+  });
 }
 
 function cancelDay(){
@@ -1230,20 +1230,20 @@ function confirmList(){
     if(!activeEntry || activeEntry.confirmed) return;
     activeEntry.confirmed = true;
 
-  const done = wholeChk.filter(Boolean).length;
-  const total = wholeMs.length;
-  const coupon = done === total ? 2 : done > 0 ? 1 : 0;
-  activeEntry.coupons = (activeEntry.coupons||0) + coupon;
-  activeEntry.wholeCoupon = coupon;
-  syncChecks(activeEntry);
+    const done = wholeChk.filter(Boolean).length;
+    const total = wholeMs.length;
+    const coupon = done === total ? 2 : done > 0 ? 1 : 0;
+    activeEntry.coupons = (activeEntry.coupons||0) + coupon;
+    activeEntry.wholeCoupon = coupon;
+    syncChecks(activeEntry);
 
     renderList();
-    ['main','bingo','list'].forEach(sc => {
-      const dh = document.getElementById('dh-'+sc);
-      if(dh && dh.innerHTML) renderHistory(sc);
+    ['main','bingo','list'].forEach(sc=>{
+      const dh=document.getElementById('dh-'+sc);
+      if(dh&&dh.innerHTML) renderHistory(sc);
     });
     toast(`미션 확정! 쿠폰 +${coupon} 🎫`);
-  }); // openPinModal 콜백 끝
+  });
 }
 
 function cancelList(){
