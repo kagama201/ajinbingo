@@ -1180,26 +1180,28 @@ function calcCoupon(checked){
 
 // Bingo Daily: 현재 Day confirm
 function confirmDay(){
-  openPinModal(()=>{
-    const page = dailyPages[dayIdx];
-    if(!page || page.confirmed) return;
-    page.confirmed = true;
+  openPinModal('confirmDay');
+}
 
-    const activeEntry = history.find(h=>h.active);
-    if(activeEntry){
-      const done = page.checked.filter(Boolean).length;
-      const dayCoupon = done === 9 ? 2 : done > 0 ? 1 : 0;
-      activeEntry.coupons = (activeEntry.coupons||0) + dayCoupon;
-      activeEntry.dayCoupons = activeEntry.dayCoupons || {};
-      activeEntry.dayCoupons[dayIdx] = dayCoupon;
-      syncChecks(activeEntry);
-      toast(`Day ${dayIdx+1} 확정! 쿠폰 +${dayCoupon} 🎫`);
-    }
-    renderBingoDay();
-    ['main','bingo','list'].forEach(sc=>{
-      const dh=document.getElementById('dh-'+sc);
-      if(dh&&dh.innerHTML) renderHistory(sc);
-    });
+function executeConfirmDay(){
+  const page = dailyPages[dayIdx];
+  if(!page || page.confirmed) return;
+  page.confirmed = true;
+
+  const activeEntry = history.find(h=>h.active);
+  if(activeEntry){
+    const done = page.checked.filter(Boolean).length;
+    const dayCoupon = done === 9 ? 2 : done > 0 ? 1 : 0;
+    activeEntry.coupons = (activeEntry.coupons||0) + dayCoupon;
+    activeEntry.dayCoupons = activeEntry.dayCoupons || {};
+    activeEntry.dayCoupons[dayIdx] = dayCoupon;
+    syncChecks(activeEntry);
+    toast(`Day ${dayIdx+1} 확정! 쿠폰 +${dayCoupon} 🎫`);
+  }
+  renderBingoDay();
+  ['main','bingo','list'].forEach(sc=>{
+    const dh=document.getElementById('dh-'+sc);
+    if(dh&&dh.innerHTML) renderHistory(sc);
   });
 }
 
@@ -1225,25 +1227,27 @@ function cancelDay(){
 
 // Whole List confirm
 function confirmList(){
-  openPinModal(()=>{
-    const activeEntry = history.find(h=>h.active);
-    if(!activeEntry || activeEntry.confirmed) return;
-    activeEntry.confirmed = true;
+  openPinModal('confirmList');
+}
 
-    const done = wholeChk.filter(Boolean).length;
-    const total = wholeMs.length;
-    const coupon = done === total ? 2 : done > 0 ? 1 : 0;
-    activeEntry.coupons = (activeEntry.coupons||0) + coupon;
-    activeEntry.wholeCoupon = coupon;
-    syncChecks(activeEntry);
+function executeConfirmList(){
+  const activeEntry = history.find(h=>h.active);
+  if(!activeEntry || activeEntry.confirmed) return;
+  activeEntry.confirmed = true;
 
-    renderList();
-    ['main','bingo','list'].forEach(sc=>{
-      const dh=document.getElementById('dh-'+sc);
-      if(dh&&dh.innerHTML) renderHistory(sc);
-    });
-    toast(`미션 확정! 쿠폰 +${coupon} 🎫`);
+  const done = wholeChk.filter(Boolean).length;
+  const total = wholeMs.length;
+  const coupon = done === total ? 2 : done > 0 ? 1 : 0;
+  activeEntry.coupons = (activeEntry.coupons||0) + coupon;
+  activeEntry.wholeCoupon = coupon;
+  syncChecks(activeEntry);
+
+  renderList();
+  ['main','bingo','list'].forEach(sc=>{
+    const dh=document.getElementById('dh-'+sc);
+    if(dh&&dh.innerHTML) renderHistory(sc);
   });
+  toast(`미션 확정! 쿠폰 +${coupon} 🎫`);
 }
 
 function cancelList(){
@@ -1301,20 +1305,20 @@ function selectProvider(p){
 // ── Key/Sheet 함수는 하단 IndexedDB 블록에서 정의 ──
 
 
-// ─── PIN 모달 ─────────────────────────────────────────────────
+// ─── PIN 모달 (2단계 분리 방식) ────────────────────────────────
 const PIN_CODE = '828517';
 let _pinInput  = '';
-let _pinCb     = null; // 인증 성공 시 실행할 콜백
+let _pendingAction = null; // 'confirmDay' | 'confirmList'
 
-function openPinModal(callback){
-  _pinCb    = callback;
+function openPinModal(action){
+  _pendingAction = action;
   _pinInput = '';
   renderPinDots();
   document.getElementById('pin-modal').classList.add('open');
 }
 
 function closePinModal(){
-  _pinCb    = null;
+  _pendingAction = null;
   _pinInput = '';
   document.getElementById('pin-modal').classList.remove('open');
 }
@@ -1329,7 +1333,7 @@ function renderPinDots(error){
     else if(i < _pinInput.length) d.classList.add('filled');
   });
   if(error){
-    void dotsWrap.offsetWidth; // reflow for animation restart
+    void dotsWrap.offsetWidth;
     dotsWrap.classList.add('shake');
   }
 }
@@ -1341,21 +1345,20 @@ function pinInput(digit){
 
   if(_pinInput.length === PIN_CODE.length){
     if(_pinInput === PIN_CODE){
-      // 성공: 콜백을 먼저 저장한 뒤 모달 닫기
-      const cb = _pinCb;
-      setTimeout(() => {
-        _pinCb = null;
-        _pinInput = '';
-        document.getElementById('pin-modal').classList.remove('open');
-        if(cb) cb();
-      }, 180);
+      // 성공 — 모달 닫고 pending action 실행
+      const action = _pendingAction;
+      _pinInput = '';
+      _pendingAction = null;
+      document.getElementById('pin-modal').classList.remove('open');
+      // 다음 프레임에서 실행 (모달 닫힘 보장)
+      requestAnimationFrame(()=>{
+        if(action === 'confirmDay')  executeConfirmDay();
+        if(action === 'confirmList') executeConfirmList();
+      });
     } else {
-      // 실패 — shake + 초기화
+      // 실패 — shake
       renderPinDots(true);
-      setTimeout(() => {
-        _pinInput = '';
-        renderPinDots();
-      }, 600);
+      setTimeout(()=>{ _pinInput=''; renderPinDots(); }, 600);
     }
   }
 }
